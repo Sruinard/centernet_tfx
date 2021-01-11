@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: tfrecords-centernet
+Version: 1.0.0
+Summary: Dataflow Pipeline that generated tfrecords
+Home-page: UNKNOWN
+Author: Stef Ruinard
+Author-email: sr.ruinard@gmail.com
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN

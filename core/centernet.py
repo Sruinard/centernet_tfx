@@ -3,20 +3,21 @@ from config import MLConfig
 from tensorflow.keras.applications import efficientnet, resnet_v2
 
 
+
 class Decoder(tf.keras.layers.Layer):
     def __init__(self, min_confidence) -> None:
         super().__init__()
         self.min_confidence = min_confidence
 
     @staticmethod
-    def __nms(heatmap, pool_size=3):
+    def _nms(heatmap, pool_size=3):
         hmax = tf.keras.layers.MaxPool2D(pool_size=pool_size, strides=1, padding="same")(heatmap)
         keep = tf.cast(tf.equal(heatmap, hmax), tf.float32)
         return hmax * keep
 
     @staticmethod
-    def __topK(heatmap, k):
-        B, H, W, C = 1, 128, 128, 2# tf.shape(heatmap)
+    def _topK(heatmap, k):
+        B, H, W, C = 1, 128, 128, MLConfig.N_CLASSES# tf.shape(heatmap)
         heatmap = tf.reshape(heatmap, shape=(B, -1))
         topk_scores, topk_inds = tf.math.top_k(input=heatmap, k=k, sorted=True)
         topk_clses = topk_inds % C
@@ -27,12 +28,11 @@ class Decoder(tf.keras.layers.Layer):
 
     def __call__(self, pred):
         heatmap, offset, regression = pred
-        heatmap = Decoder.__nms(heatmap)
-        topk_scores, topk_inds, topk_clses, topk_ys, topk_xs = Decoder.__topK(heatmap, MLConfig.K)
+        heatmap = Decoder._nms(heatmap)
+        topk_scores, topk_inds, topk_clses, topk_ys, topk_xs = Decoder._topK(heatmap, MLConfig.K)
 
         offsets = Decoder.gather_object_data(offset, topk_inds)
         regressions = Decoder.gather_object_data(regression, topk_inds)
-
         xmin = tf.expand_dims(topk_xs + offsets[:,:,0] - regressions[:, :, 0] / 2.0, axis=-1)
         ymin = tf.expand_dims(topk_ys + offsets[:,:,1] - regressions[:, :, 1] / 2.0, axis=-1)
         width = tf.expand_dims(regressions[:, :, 0], axis=-1)

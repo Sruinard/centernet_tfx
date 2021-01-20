@@ -8,14 +8,6 @@ from config import Config
 from data.utils import dataloader
 
 if __name__ == "__main__":
-    data_loader = dataloader.DataLoader()
-
-    if Config.FINE_TUNE:
-        train_df = data_loader._get_dutch_license_dateframe()
-    else:
-        train_df = data_loader._get_license_dataframe()
-    labelmap = data_loader._get_labelmap(Config.LABELMAP_TXT)
-    grouped_dfs = data_loader._get_groups(train_df, "image_id")
     options = PipelineOptions(
         runner=Config.RUNNER,
         project=Config.PROJECT_ID,
@@ -28,7 +20,8 @@ if __name__ == "__main__":
 
     with beam.Pipeline(options=options) as pipeline:
         content = (pipeline
-                   | "create data" >> beam.Create(grouped_dfs)
-                   | "create tf examples" >> beam.ParDo(dataloader.ConvertToExample(Config.IMAGE_DIR, labelmap))
+                   | "create data" >> beam.io.ReadFromTFRecord(file_pattern="/Volumes/STEF-EXT/object_detection/kitti/kitti/3.2.0/kitti-train.tfrecord*")
+                   | "parse tfds examples" >> beam.ParDo(dataloader.ParseExample())
+                   | "create tf examples" >> beam.ParDo(dataloader.ConvertToExample())
                    | "write to TFRecords" >> beam.io.WriteToTFRecord(file_path_prefix=Config.LABELS_TFRECORD)
                    )

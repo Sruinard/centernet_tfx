@@ -3,18 +3,14 @@ import os
 
 class Config:
 
-    RUN_CLOUD = True
+    RUN_CLOUD = False
     FINE_TUNE = False
-    BASE_DIR = "gs://raw_data_layer/license_plate_detection/CCPD2019" if RUN_CLOUD else "/Volumes/STEF-EXT/object_detection/license_plate_detection/CCPD2019"
+    BASE_DIR = "gs://raw_data_layer/license_plate_detection/CCPD2019" if RUN_CLOUD else "/Volumes/STEF-EXT/object_detection/kitti"
     DATASET = "CCPD2019"
     if FINE_TUNE:
-        BASE_DIR = "gs://raw_data_layer/license_plate_detection/dutch_dataset" if RUN_CLOUD else "/Volumes/STEF-EXT/object_detection/license_plate_detection/dutch_dataset"
+        BASE_DIR = "gs://raw_data_layer/license_plate_detection/dutch_dataset" if RUN_CLOUD else "/Volumes/STEF-EXT/object_detection/kitti"
         DATASET = "dutch_dataset"
-    
-    IMAGE_DIR = os.path.join(BASE_DIR, "images")
 
-    LABELS_TXT = os.path.join(BASE_DIR, "splits/train.txt")
-    LABELMAP_TXT = os.path.join(BASE_DIR, "labelmap.txt")
     LABELS_TFRECORD = os.path.join(BASE_DIR, "tfrecords/license_plate.tfrecord")
 
     RUNNER = "DataflowRunner" if RUN_CLOUD else "DirectRunner"
@@ -29,8 +25,20 @@ class MLConfig:
     INPUT_HEIGHT = 512
     OUTPUT_WIDTH = 128
     OUTPUT_HEIGHT = 128
+    
+    CLASS_TO_INDEX = {
+        "Car":0,
+        "Van":1,
+        "Truck":2,
+        "Pedestrian":3,
+        "Person_sitting":4,
+        "Cyclist":5,
+        "Tram":6,
+        "Misc":7,
+    }
+    INDEX_TO_CLASS = {value: key for key, value in CLASS_TO_INDEX.items()}
 
-    N_CLASSES = 1 + 1 # background + license_plate
+    N_CLASSES = len(CLASS_TO_INDEX) # background + license_plate
     N_OFFSETS = 2
     N_REGRESSIONS = 2
 
